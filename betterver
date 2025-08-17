@@ -1,0 +1,78 @@
+local cell = peripheral.wrap("bottom")
+local monitor = peripheral.wrap("right")
+monitor.setTextScale(1)
+term.redirect(monitor)
+
+local width, height = monitor.getSize()
+local flashState = false
+local PROGRESS_BAR_WIDTH = math.min(40, width - 4)
+
+-- Generic centered print with optional clearing
+local function centerPrint(y, text, color, clearLine)
+    if clearLine then
+        term.setCursorPos(1, y)
+        term.write(string.rep(" ", width))
+    end
+    term.setCursorPos(math.floor((width - #text)/2) + 1, y)
+    term.setTextColor(color or colors.white)
+    term.write(text)
+end
+
+-- Draw colored progress bar (flat, centered)
+local function drawProgressBar(y, percent)
+    local filled = math.floor(percent * PROGRESS_BAR_WIDTH / 100)
+    local empty = PROGRESS_BAR_WIDTH - filled
+    local color = percent <= 35 and colors.red or percent <= 65 and colors.yellow or colors.green
+    local startX = math.floor((width - (PROGRESS_BAR_WIDTH + 2))/2) + 1
+
+    term.setCursorPos(startX, y)
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
+    term.write("[")
+    term.setBackgroundColor(color)
+    term.write(string.rep(" ", filled))
+    term.setBackgroundColor(colors.gray)
+    term.write(string.rep(" ", empty))
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
+    term.write("]")
+end
+
+-- Draw static header
+term.clear()
+centerPrint(1, "=== Dimensional Cell Energy ===")
+local labels = {"Current Energy:", "Max Capacity:"}
+for i, label in ipairs(labels) do
+    centerPrint(i+2, label)
+end
+
+-- Flashing alerts function
+local function drawAlert(percent)
+    local y = 10
+    local alertText = (percent <= 35 and "!!! LOW ENERGY !!!") or (percent >= 95 and "!!! NEAR FULL !!!") or ""
+    if alertText ~= "" then
+        centerPrint(y, flashState and alertText or string.rep(" ", #alertText), flashState and colors.red or colors.white)
+        flashState = not flashState
+    else
+        centerPrint(y, string.rep(" ", width))
+    end
+end
+
+-- Main loop
+while true do
+    local energy = cell.getEnergy() or 0
+    local capacity = cell.getEnergyCapacity() or 1
+    local percent = math.floor((energy / capacity) * 100)
+
+    -- Update numeric values
+    local values = {energy, capacity}
+    for i, val in ipairs(values) do
+        centerPrint(i+2, string.format("%s %d RF", labels[i], val), colors.white, true)
+    end
+
+    drawProgressBar(6, percent)
+    centerPrint(8, string.format("%3d%%", percent), colors.white, true)
+    drawAlert(percent)
+
+    sleep(0.5)
+end
