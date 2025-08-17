@@ -2,11 +2,26 @@
 -- Reads energy levels from an RFToolsPower Dimensional Cell
 -- and prints the results to the computer.
 
--- Use peripheral.find to automatically detect the Dimensional Cell
-local cell = peripheral.find("rftools_powercell") or peripheral.find("dimensional_cell") or peripheral.find("block")
+-- Debug: list all connected peripherals
+print("=== Connected Peripherals ===")
+for _, name in ipairs(peripheral.getNames()) do
+  print("- " .. name .. " (" .. peripheral.getType(name) .. ")")
+end
+print("=============================")
+
+-- Try to locate the Dimensional Cell explicitly
+local cell
+for _, name in ipairs(peripheral.getNames()) do
+  local pType = peripheral.getType(name)
+  if pType:find("rftools") or pType:find("cell") or pType:find("power") then
+    cell = peripheral.wrap(name)
+    print("Found potential Dimensional Cell on: " .. name .. " [" .. pType .. "]")
+    break
+  end
+end
 
 if not cell then
-  print("No Dimensional Cell peripheral found! Make sure a modem is attached.")
+  print("No Dimensional Cell peripheral detected! Make sure a modem is attached to the block.")
   return
 end
 
@@ -15,7 +30,6 @@ local function extractEnergy(val)
   if type(val) == "number" then
     return val
   elseif type(val) == "table" then
-    -- try common keys
     return val.energy or val.stored or val[1] or 0
   end
   return 0
