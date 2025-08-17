@@ -1,8 +1,9 @@
--- Wrap the Dimensional Cell (Advanced) directly
-local cell = peripheral.wrap("bottom")  -- assuming the computer is on top of the cell
+-- Wrap the Dimensional Cell (Advanced)
+local cell = peripheral.wrap("bottom")  -- computer on top of the cell
 
--- Get the current energy stored
-local energy = cell.getEnergyStored()
+-- Get the current energy stored and max capacity
+local energy = cell.getEnergy()
+local capacity = cell.getCapacity()
 
 -- Print the energy value
-print("Current Energy Stored: " .. energy .. " RF")
+print("Current Energy Stored: " .. energy .. " / " .. capacity .. " RF")
