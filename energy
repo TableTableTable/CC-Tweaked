@@ -1,73 +1,55 @@
 -- rftools_power_reader.lua
--- Reads energy levels from an RFToolsPower Dimensional Cell
--- and prints the results to the computer.
+-- Full setup for reading energy from an RFToolsPower Dimensional Cell
+-- via rednet. This includes instructions for broadcasting energy from the cell.
 
--- Debug: list all connected peripherals
-print("=== Connected Peripherals ===")
-for _, name in ipairs(peripheral.getNames()) do
-  print("- " .. name .. " (" .. peripheral.getType(name) .. ")")
-end
-print("=============================")
+--[==[
+  SETUP INSTRUCTIONS:
 
--- Try to locate the Dimensional Cell explicitly
-local cell
-for _, name in ipairs(peripheral.getNames()) do
-  local pType = peripheral.getType(name)
-  if pType:find("rftools") or pType:find("cell") or pType:find("power") then
-    cell = peripheral.wrap(name)
-    print("Found potential Dimensional Cell on: " .. name .. " [" .. pType .. "]")
-    break
+  1. Place a modem (wired or wireless) attached to the Dimensional Cell.
+  2. Next to the computer, place a modem (wired or wireless) and connect it to the computer.
+  3. On the block adjacent to the Dimensional Cell, or on the computer itself, run a small script to broadcast energy:
+
+     -- broadcast_energy.lua
+     local cell = peripheral.wrap("<side of cell>")
+     rednet.open("<modem side>")
+     while true do
+         local energy = 0
+         local capacity = 0
+         if cell.getEnergy then energy = cell.getEnergy() end
+         if cell.getMaxEnergyStored then capacity = cell.getMaxEnergyStored() end
+         rednet.broadcast({stored=energy, capacity=capacity}, "EnergyChannel")
+         sleep(5)
+     end
+
+  4. On the computer, run this rftools_power_reader.lua script to listen for broadcasts.
+  5. This program will print the energy and capacity sent by the broadcaster.
+
+]==]
+
+-- Open rednet on all sides connected to a modem
+for _, side in ipairs(redstone.getSides()) do
+  if peripheral.getType(side) == "modem" then
+    rednet.open(side)
+    print("Opened rednet on: " .. side)
   end
 end
 
-if not cell then
-  print("No Dimensional Cell peripheral detected! Make sure a modem is attached to the block.")
-  return
-end
+print("Listening for energy broadcasts from the Dimensional Cell...")
 
--- Helper: extract number from either plain number or table response
-local function extractEnergy(val)
-  if type(val) == "number" then
-    return val
-  elseif type(val) == "table" then
-    return val.energy or val.stored or val[1] or 0
+-- Receive energy messages and display them
+while true do
+  local senderId, message, protocol = rednet.receive("EnergyChannel", 5)
+  if senderId and type(message) == "table" then
+    local stored = message.stored or 0
+    local capacity = message.capacity or 0
+    print("=== Energy Update ===")
+    print("Stored: " .. stored .. " RF")
+    if capacity > 0 then
+      print("Capacity: " .. capacity .. " RF")
+      print("Usage: " .. math.floor((stored / capacity) * 100) .. "%")
+    end
+  else
+    print("No message received. Make sure a broadcaster is running.")
   end
-  return 0
-end
-
-local function extractCapacity(val)
-  if type(val) == "number" then
-    return val
-  elseif type(val) == "table" then
-    return val.capacity or val.max or val[2] or 0
-  end
-  return 0
-end
-
--- Try to get stored energy and capacity
-local stored = 0
-local capacity = 0
-
-if cell.getEnergy then
-  stored = extractEnergy(cell.getEnergy())
-elseif cell.getEnergyStored then
-  stored = extractEnergy(cell.getEnergyStored())
-else
-  print("Could not find an energy method on the Dimensional Cell.")
-  return
-end
-
-if cell.getMaxEnergyStored then
-  capacity = extractCapacity(cell.getMaxEnergyStored())
-elseif cell.getEnergyCapacity then
-  capacity = extractCapacity(cell.getEnergyCapacity())
-end
-
--- Print results
-print("=== RFTools Dimensional Cell ===")
-print("Energy Stored: " .. tostring(stored) .. " RF")
-if capacity > 0 then
-  print("Capacity: " .. tostring(capacity) .. " RF")
-  local percent = math.floor((stored / capacity) * 100)
-  print("Usage: " .. percent .. "%")
+  sleep(5)
 end
