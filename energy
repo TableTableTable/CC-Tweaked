@@ -1,9 +1,30 @@
 -- Wrap the Dimensional Cell (Advanced)
 local cell = peripheral.wrap("bottom")  -- computer on top of the cell
 
--- Get the current energy stored and max capacity
-local energy = cell.getEnergy()
-local capacity = cell.getCapacity()
+-- Wrap the multi-monitor (on the right)
+local monitor = peripheral.wrap("right")
 
--- Print the energy value
-print("Current Energy Stored: " .. energy .. " / " .. capacity .. " RF")
+-- Set text scale for readability
+monitor.setTextScale(1)
+
+-- Redirect output to the monitor
+term.redirect(monitor)
+
+-- Function to display energy
+local function displayEnergy()
+    term.clear()
+    term.setCursorPos(1,1)
+    
+    local energy = cell.getEnergy()
+    local capacity = cell.getEnergyCapacity()
+    
+    print("=== Dimensional Cell Energy ===")
+    print("Current Energy: " .. energy .. " RF")
+    print("Max Capacity:   " .. capacity .. " RF")
+end
+
+-- Continuously update every second
+while true do
+    displayEnergy()
+    sleep(1)  -- wait 1 second before refreshing
+end
