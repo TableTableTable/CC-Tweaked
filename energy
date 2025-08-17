@@ -2,12 +2,11 @@
 -- Reads energy levels from an RFToolsPower Dimensional Cell
 -- and prints the results to the computer.
 
--- Change this to the side the Dimensional Cell (with a modem) is on
-local side = "back"
+-- Use peripheral.find to automatically detect the Dimensional Cell
+local cell = peripheral.find("rftools_powercell") or peripheral.find("dimensional_cell") or peripheral.find("block")
 
-local cell = peripheral.wrap(side)
 if not cell then
-  print("No Dimensional Cell found on side: " .. side)
+  print("No Dimensional Cell peripheral found! Make sure a modem is attached.")
   return
 end
 
