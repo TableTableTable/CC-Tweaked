@@ -3,7 +3,7 @@
 -- and prints the results to the computer.
 
 -- Change this to the side the Dimensional Cell (with a modem) is on
-local side = "right"
+local side = "back"
 
 local cell = peripheral.wrap(side)
 if not cell then
