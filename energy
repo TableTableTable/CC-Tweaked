@@ -1,15 +1,8 @@
--- Wrap the dimensional cell peripheral
-local cell = peripheral.wrap("top")  -- assuming the wireless modem is on top of the cell
+-- Wrap the Dimensional Cell (Advanced) directly
+local cell = peripheral.wrap("bottom")  -- assuming the computer is on top of the cell
 
--- Open the wireless modem on the computer
-local modemSide = "top"  -- the modem on top of the advanced computer
-rednet.open(modemSide)
-
--- Send a request to the dimensional cell and get the energy
+-- Get the current energy stored
 local energy = cell.getEnergyStored()
 
 -- Print the energy value
 print("Current Energy Stored: " .. energy .. " RF")
-
--- Close the modem (optional)
-rednet.close(modemSide)
