@@ -3,7 +3,7 @@
 -- and prints the results to the computer.
 
 -- Change this to the side the Dimensional Cell (with a modem) is on
-local side = "back"
+local side = "right"
 
 local cell = peripheral.wrap(side)
 if not cell then
@@ -11,30 +11,50 @@ if not cell then
   return
 end
 
+-- Helper: extract number from either plain number or table response
+local function extractEnergy(val)
+  if type(val) == "number" then
+    return val
+  elseif type(val) == "table" then
+    -- try common keys
+    return val.energy or val.stored or val[1] or 0
+  end
+  return 0
+end
+
+local function extractCapacity(val)
+  if type(val) == "number" then
+    return val
+  elseif type(val) == "table" then
+    return val.capacity or val.max or val[2] or 0
+  end
+  return 0
+end
+
 -- Try to get stored energy and capacity
 local stored = 0
 local capacity = 0
 
 if cell.getEnergy then
-  stored = cell.getEnergy()
+  stored = extractEnergy(cell.getEnergy())
 elseif cell.getEnergyStored then
-  stored = cell.getEnergyStored()
+  stored = extractEnergy(cell.getEnergyStored())
 else
   print("Could not find an energy method on the Dimensional Cell.")
   return
 end
 
 if cell.getMaxEnergyStored then
-  capacity = cell.getMaxEnergyStored()
+  capacity = extractCapacity(cell.getMaxEnergyStored())
 elseif cell.getEnergyCapacity then
-  capacity = cell.getEnergyCapacity()
+  capacity = extractCapacity(cell.getEnergyCapacity())
 end
 
 -- Print results
 print("=== RFTools Dimensional Cell ===")
-print("Energy Stored: " .. stored .. " RF")
+print("Energy Stored: " .. tostring(stored) .. " RF")
 if capacity > 0 then
-  print("Capacity: " .. capacity .. " RF")
+  print("Capacity: " .. tostring(capacity) .. " RF")
   local percent = math.floor((stored / capacity) * 100)
   print("Usage: " .. percent .. "%")
 end
