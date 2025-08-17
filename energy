@@ -1,55 +1,15 @@
--- rftools_power_reader.lua
--- Full setup for reading energy from an RFToolsPower Dimensional Cell
--- via rednet. This includes instructions for broadcasting energy from the cell.
+-- Wrap the dimensional cell peripheral
+local cell = peripheral.wrap("top")  -- assuming the wireless modem is on top of the cell
 
---[==[
-  SETUP INSTRUCTIONS:
+-- Open the wireless modem on the computer
+local modemSide = "top"  -- the modem on top of the advanced computer
+rednet.open(modemSide)
 
-  1. Place a modem (wired or wireless) attached to the Dimensional Cell.
-  2. Next to the computer, place a modem (wired or wireless) and connect it to the computer.
-  3. On the block adjacent to the Dimensional Cell, or on the computer itself, run a small script to broadcast energy:
+-- Send a request to the dimensional cell and get the energy
+local energy = cell.getEnergyStored()
 
-     -- broadcast_energy.lua
-     local cell = peripheral.wrap("<side of cell>")
-     rednet.open("<modem side>")
-     while true do
-         local energy = 0
-         local capacity = 0
-         if cell.getEnergy then energy = cell.getEnergy() end
-         if cell.getMaxEnergyStored then capacity = cell.getMaxEnergyStored() end
-         rednet.broadcast({stored=energy, capacity=capacity}, "EnergyChannel")
-         sleep(5)
-     end
+-- Print the energy value
+print("Current Energy Stored: " .. energy .. " RF")
 
-  4. On the computer, run this rftools_power_reader.lua script to listen for broadcasts.
-  5. This program will print the energy and capacity sent by the broadcaster.
-
-]==]
-
--- Open rednet on all sides connected to a modem
-for _, side in ipairs(redstone.getSides()) do
-  if peripheral.getType(side) == "modem" then
-    rednet.open(side)
-    print("Opened rednet on: " .. side)
-  end
-end
-
-print("Listening for energy broadcasts from the Dimensional Cell...")
-
--- Receive energy messages and display them
-while true do
-  local senderId, message, protocol = rednet.receive("EnergyChannel", 5)
-  if senderId and type(message) == "table" then
-    local stored = message.stored or 0
-    local capacity = message.capacity or 0
-    print("=== Energy Update ===")
-    print("Stored: " .. stored .. " RF")
-    if capacity > 0 then
-      print("Capacity: " .. capacity .. " RF")
-      print("Usage: " .. math.floor((stored / capacity) * 100) .. "%")
-    end
-  else
-    print("No message received. Make sure a broadcaster is running.")
-  end
-  sleep(5)
-end
+-- Close the modem (optional)
+rednet.close(modemSide)
